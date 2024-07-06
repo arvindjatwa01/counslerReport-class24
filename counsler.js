@@ -33,12 +33,17 @@ let counslerReportChart;
 
 // get the counsler ID from the URl
 const getCounslerId = () => {
+  // Get the current URL from the browser
+  const url = window.location.href;
+
+  // Create a URL object
+  const urlObject = new URL(url);
+
   // Use URLSearchParams to extract query parameters
   const params = new URLSearchParams(urlObject.search);
 
   // Get the value of the userId parameter
   const userId = params.get("userId");
-
   return userId;
 };
 
