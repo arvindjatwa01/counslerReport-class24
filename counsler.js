@@ -43,7 +43,7 @@ const getCounslerId = () => {
   const params = new URLSearchParams(urlObject.search);
 
   // Get the value of the userId parameter
-  const userId = params.get("userId");
+  const userId = params.get("userid");
   return userId;
 };
 
@@ -63,11 +63,40 @@ const getChart = (result, currentMonth = null, montsArr = null) => {
   if (counslerReportChart) {
     counslerReportChart.destroy();
   }
-  const perDaySalary = montsArr ? parseInt(result[3].dlb_salary) : parseInt(result[0].dlb_salary);
-  let amount = [];
-  result.map((obj) => amount.push(obj.total_revenue));
+  // const perDaySalary = montsArr ? parseInt(result[3].dlb_salary) : parseInt(result[0].dlb_salary);
+  let perDaySalary = 0;
+  if (montsArr) {
+    perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)));
+  } else {
+    const currentYear = new Date().getFullYear();
+    const totalDays = new Date(currentYear, currentMonth, 0).getDate();
+    perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)) / totalDays);
+  }
 
-  const maxRevenueAmt = Math.max(...result.map((item) => item.total_revenue));
+  let amount = [];
+  result.map((obj) => amount.push(Number(obj.total_revenue)));
+
+  const maxRevenueAmt = Math.max(...result.map((item) => Number(item.total_revenue)));
+
+  result.map((item) => item.dlb_salary);
+
+  let backgroundColor = [];
+  let borderColor = [];
+  result.map((item) => {
+    let amt = Number(item.total_revenue) / Number(perDaySalary || 0);
+    if (amt <= 10) {
+      backgroundColor.push("rgba(255, 99, 132, 1)");
+      borderColor.push("rgba(255, 99, 132, 1)");
+    } else if (amt > 10 && amt <= 15) {
+      backgroundColor.push("rgba(255, 206, 86, 1)");
+      borderColor.push("rgba(255, 206, 86, 1)");
+    } else {
+      backgroundColor.push("rgba(75, 192, 192, 1)");
+      borderColor.push("rgba(75, 192, 192, 1)");
+    }
+  });
+
+  // Math.ceil(Number(value) / Number(perDaySalary || 0)
 
   // Data for the chart
   const data = {
@@ -76,22 +105,24 @@ const getChart = (result, currentMonth = null, montsArr = null) => {
       {
         label: "Sales",
         data: result.length === 0 ? [] : [...amount],
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.2)",
-          "rgba(54, 162, 235, 0.2)",
-          "rgba(255, 206, 86, 0.2)",
-          "rgba(75, 192, 192, 0.2)",
-          "rgba(153, 102, 255, 0.2)",
-          "rgba(255, 159, 64, 0.2)",
-        ],
-        borderColor: [
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(153, 102, 255, 1)",
-          "rgba(255, 159, 64, 1)",
-        ],
+        backgroundColor: backgroundColor,
+        borderColor: borderColor,
+        // backgroundColor: [
+        //   "rgba(255, 99, 132, 0.2)",
+        //   "rgba(54, 162, 235, 0.2)",
+        //   "rgba(255, 206, 86, 0.2)",
+        //   "rgba(75, 192, 192, 0.2)",
+        //   "rgba(153, 102, 255, 0.2)",
+        //   "rgba(255, 159, 64, 0.2)",
+        // ],
+        // borderColor: [
+        //   "rgba(255, 99, 132, 1)",
+        //   "rgba(54, 162, 235, 1)",
+        //   "rgba(255, 206, 86, 1)",
+        //   "rgba(75, 192, 192, 1)",
+        //   "rgba(153, 102, 255, 1)",
+        //   "rgba(255, 159, 64, 1)",
+        // ],
         borderWidth: 2,
       },
     ],
@@ -106,7 +137,10 @@ const getChart = (result, currentMonth = null, montsArr = null) => {
         datalabels: {
           anchor: "end",
           align: "end",
-          formatter: (value) => `${Math.ceil(value / perDaySalary)}X`, // Format values as 'k'
+          formatter: (value) => {
+            let revenueAmt = `${Math.ceil(Number(value) / Number(perDaySalary || 0))}`;
+            return `${Math.ceil(Number(value) / Number(perDaySalary || 0))}X`; // Format values as 'k'
+          },
           color: "black",
           font: {
             weight: "bold",
