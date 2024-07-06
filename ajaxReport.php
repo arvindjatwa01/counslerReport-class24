@@ -1,0 +1,108 @@
+<?php
+$db = mysqli_connect('localhost', 'root', '', 'class24');
+if (mysqli_connect_errno()) {
+    echo "Failed to connect to MySQL: " . mysqli_connect_error();
+    die;
+}
+
+function enc_dec($str, $type = "enc", $time = '')
+{
+    $key = 'crypt';
+    if ($type == 'enc') {
+        $encrypted = base64_encode(time() . "|" . $str);
+        return $encrypted;
+    } else {
+        $de = base64_decode($str);
+        $dec = explode("|", $de);
+        if (empty($time)) {
+            if (isset($dec[1])) {
+                return $dec[1];
+            }
+            return 0;
+        } else {
+            return array($dec[0], $dec[1]);
+        }
+    }
+}
+
+if ($_POST["getMonthWeeksReport"]) {
+
+    $counslerId = enc_dec($_POST["counslarId"]);
+    $monthNumber = $_POST["monthNum"];
+    // $query = "SELECT * FROM wifi_counsellor_report WHERE dlb_a_id = $counslerId AND MONTH(dlb_created_date) = 6 AND YEAR(dlb_created_date) = YEAR(CURDATE());";
+
+    $query = "SELECT WEEK(dlb_created_date) AS week_number, COUNT(*) AS records_count, SUM(dlb_collectorate_revenue) AS total_revenue, MAX(dlb_collectorate_revenue) AS highest_revenue, dlb_salary, GROUP_CONCAT(dlb_c_id ORDER BY dlb_c_id ASC) AS dlb_c_ids, GROUP_CONCAT(dlb_a_id ORDER BY dlb_c_id ASC) AS dlb_a_ids, GROUP_CONCAT(dlb_created_date ORDER BY dlb_c_id ASC) AS dlb_created_dates FROM wifi_counsellor_report WHERE dlb_a_id = $counslerId AND MONTH(dlb_created_date) = $monthNumber AND YEAR(dlb_created_date) = YEAR(CURDATE()) GROUP BY WEEK(dlb_created_date) ORDER BY WEEK(dlb_created_date) ASC";
+
+    $result = mysqli_query($db, $query);
+
+    // Fetch data from the result set
+    $data = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        $data[] = $row;
+    }
+    if (empty($data)) {
+        $apiSuccess = 0;
+    } else {
+        $apiSuccess = 1;
+    }
+
+    echo json_encode(array("apiSuccess" => $apiSuccess, "responsePacket" => $data));
+}
+
+if ($_POST['getMonthsReport']) {
+
+    $counslerId = enc_dec($_POST["counslarId"]);
+
+    $query = "WITH last_six_months AS (
+    SELECT DATE_FORMAT(CURDATE() - INTERVAL 5 MONTH, '%Y-%m-01') AS first_day
+    UNION ALL
+    SELECT DATE_FORMAT(CURDATE() - INTERVAL 4 MONTH, '%Y-%m-01')
+    UNION ALL
+    SELECT DATE_FORMAT(CURDATE() - INTERVAL 3 MONTH, '%Y-%m-01')
+    UNION ALL
+    SELECT DATE_FORMAT(CURDATE() - INTERVAL 2 MONTH, '%Y-%m-01')
+    UNION ALL
+    SELECT DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01')
+    UNION ALL
+    SELECT DATE_FORMAT(CURDATE(), '%Y-%m-01')
+)
+SELECT 
+    MONTH(lsm.first_day) AS month_number,
+    YEAR(lsm.first_day) AS year_number,
+    COUNT(wcr.dlb_created_date) AS records_count, 
+    COALESCE(SUM(wcr.dlb_collectorate_revenue), 0) AS total_revenue, 
+    COALESCE(MAX(wcr.dlb_collectorate_revenue), 0) AS highest_revenue, 
+    COALESCE(wcr.dlb_salary, 0) AS dlb_salary, 
+    COALESCE(GROUP_CONCAT(wcr.dlb_c_id ORDER BY wcr.dlb_c_id ASC), '') AS dlb_c_ids, 
+    COALESCE(GROUP_CONCAT(wcr.dlb_a_id ORDER BY wcr.dlb_c_id ASC), '') AS dlb_a_ids, 
+    COALESCE(GROUP_CONCAT(wcr.dlb_created_date ORDER BY wcr.dlb_c_id ASC), '') AS dlb_created_dates 
+FROM 
+    last_six_months lsm
+LEFT JOIN 
+    wifi_counsellor_report wcr
+ON 
+    MONTH(wcr.dlb_created_date) = MONTH(lsm.first_day)
+    AND YEAR(wcr.dlb_created_date) = YEAR(lsm.first_day)
+    AND wcr.dlb_a_id = $counslerId
+GROUP BY 
+    YEAR(lsm.first_day), MONTH(lsm.first_day)
+ORDER BY 
+    YEAR(lsm.first_day) ASC, MONTH(lsm.first_day) ASC;
+";
+
+    $result = mysqli_query($db, $query);
+
+    // Fetch data from the result set
+    $data = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        $data[] = $row;
+    }
+    if (empty($data)) {
+        $apiSuccess = 0;
+    } else {
+        $apiSuccess = 1;
+    }
+
+    echo json_encode(array("apiSuccess" => $apiSuccess, "responsePacket" => $data));
+}
+?>
