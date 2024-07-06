@@ -33,14 +33,25 @@ let counslerReportChart;
 
 // get the counsler ID from the URl
 const getCounslerId = () => {
-  const url = window.location.href;
-  const urlObject = new URL(url);
+  // Use URLSearchParams to extract query parameters
+  const params = new URLSearchParams(urlObject.search);
 
-  const pathname = urlObject.pathname;
-  const encodedString = pathname.split("/").pop();
+  // Get the value of the userId parameter
+  const userId = params.get("userId");
 
-  return encodedString;
+  return userId;
 };
+
+// // get the counsler ID from the URl
+// const getCounslerId = () => {
+//   const url = window.location.href;
+//   const urlObject = new URL(url);
+
+//   const pathname = urlObject.pathname;
+//   const encodedString = pathname.split("/").pop();
+
+//   return encodedString;
+// };
 
 // get the chart
 const getChart = (result, currentMonth = null, montsArr = null) => {
