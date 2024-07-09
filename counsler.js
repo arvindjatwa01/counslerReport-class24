@@ -71,6 +71,7 @@ const getChart = (result, currentMonth = null, montsArr = null) => {
     const currentYear = new Date().getFullYear();
     const totalDays = new Date(currentYear, currentMonth, 0).getDate();
     perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)) / totalDays);
+    // perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)));
   }
 
   let amount = [];
@@ -232,6 +233,7 @@ const handleClearFilter = () => {
   $("button").removeClass("btn-secondary"); // Remove highlight class from all buttons
   $("#clearFilter").html("");
   getMonthlyReportChart();
+  handleFilterAnimation("monthsFilter");
 };
 
 // get all the months show for filtering
@@ -246,8 +248,32 @@ const getMonths = () => {
   $("#months").html(monthsList);
 };
 
+// show hide the Months name
+const handleShowHideMonthsName = () => {
+  $(".monthsOpen, .monthsClose").toggleClass("monthsOpen monthsClose");
+
+  if ($("#montheFilterEye").hasClass("fa-eye")) {
+    $("#montheFilterEye").addClass("fa-eye-slash").removeClass("fa-eye");
+  } else if ($("#montheFilterEye").hasClass("fa-eye-slash")) {
+    $("#montheFilterEye").addClass("fa-eye").removeClass("fa-eye-slash");
+  }
+};
+
+// Filter animations
+const handleFilterAnimation = (filterType = "byLabel") => {
+  if (window.screen.width <= 768) {
+    if (filterType === "byLabel") {
+      $("#monthsFilter").on("click", handleShowHideMonthsName);
+    } else if (filterType === "monthsFilter") {
+      $(".monthsOpen, .monthsClose").toggleClass("monthsOpen monthsClose");
+      $("#montheFilterEye").addClass("fa-eye").removeClass("fa-eye-slash");
+    }
+  }
+};
+
 $(document).ready(function () {
   getCounslerId();
   getMonths();
   getMonthlyReportChart();
+  handleFilterAnimation();
 });

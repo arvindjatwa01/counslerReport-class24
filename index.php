@@ -26,7 +26,7 @@
                 </div>
                 <fieldset class="reset">
                     <legend class="reset" id="monthsFilter">Filter By Month <i class="fa-solid fa-eye"
-                            id="montheFilterEye"></i></legend>
+                            id="montheFilterEye" onclick="handleShowHideMonthsName()"></i></legend>
                     <div class="row monthsClose" id="months"></div>
                 </fieldset>
             </div>
