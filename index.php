@@ -20,6 +20,7 @@
 <body>
     <div class="container">
         <div class="row my-2">
+            <h4 class="text-center" id="counslerInfo"></h4>
             <div class="col-lg-12 col-sm-5 col-md-5 p-3 border-0 border-secondary rounded-3 shadow-lg filters">
                 <div class="d-flex mb-2" id="clearFilter" style="justify-content: end">
 

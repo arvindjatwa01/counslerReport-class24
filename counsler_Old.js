@@ -58,74 +58,21 @@ const getCounslerId = () => {
 //   return encodedString;
 // };
 
-function getWeeksInMonth(year, month) {
-  // Create a date object for the first day of the month
-  const firstDay = new Date(year, month - 1, 1);
-
-  // Create a date object for the last day of the month
-  const lastDay = new Date(year, month, 0);
-
-  // Get the ISO week number for the first day of the month
-  const firstWeekNumber = getWeekNumber(firstDay);
-
-  // Get the ISO week number for the last day of the month
-  const lastWeekNumber = getWeekNumber(lastDay);
-
-  // Calculate the number of weeks
-  return lastWeekNumber - firstWeekNumber + 1;
-}
-
-function getWeekNumber(date) {
-  // Create a copy of the date object
-  const currentDate = new Date(date.getTime());
-
-  // Set the day of the week to Thursday (ISO week starts on Monday and week 1 contains January 4th)
-  currentDate.setDate(currentDate.getDate() + 4 - (currentDate.getDay() || 7));
-
-  // Calculate the first day of the year
-  const yearStart = new Date(currentDate.getFullYear(), 0, 1);
-
-  // Calculate the ISO week number
-  const weekNumber = Math.ceil(((currentDate - yearStart) / 86400000 + 1) / 7);
-
-  return weekNumber;
-}
-
 // get the chart
 const getChart = (result, currentMonth = null, montsArr = null) => {
   if (counslerReportChart) {
     counslerReportChart.destroy();
   }
   // const perDaySalary = montsArr ? parseInt(result[3].dlb_salary) : parseInt(result[0].dlb_salary);
-  var perDaySalary = [];
-  const today = new Date();
-  const month = today.getMonth() + 1; // getMonth() is zero-based
-  const day = today.getDate();
+  let perDaySalary = 0;
   if (montsArr) {
-    perDaySalary = result.map((item) => {
-      if (item.month_number == month) {
-        let perDay = Number(item.dlb_salary) / 30;
-        return perDay * day;
-      } else {
-        return Number(item.dlb_salary);
-      }
-    });
+    perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)));
   } else {
-    //Weekly perDay salary count
-    let date = result.map((item) => item.dlb_revenue_date);
-    let dateSeprate = date[0].split("-");
-    let numberOfWeeks = getWeeksInMonth(Number(dateSeprate[0]), Number(dateSeprate[1]));
-    for (var i = 0; i < result.length; i++) {
-      perDaySalary.push(Number(result[i].dlb_salary) / numberOfWeeks);
-    }
+    const currentYear = new Date().getFullYear();
+    const totalDays = new Date(currentYear, currentMonth, 0).getDate();
+    perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)) / totalDays);
+    // perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)));
   }
-  // if (montsArr) {
-  //   perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)));
-  // } else {
-  //   const currentYear = new Date().getFullYear();
-  //   const totalDays = new Date(currentYear, currentMonth, 0).getDate();
-  //   perDaySalary = Number(Math.max(...result.map((item) => item.dlb_salary)) / totalDays);
-  // }
 
   let amount = [];
   result.map((obj) => amount.push(Number(obj.total_revenue)));
@@ -136,8 +83,8 @@ const getChart = (result, currentMonth = null, montsArr = null) => {
 
   let backgroundColor = [];
   let borderColor = [];
-  result.map((item, index) => {
-    let amt = Number(item.total_revenue) / Number(perDaySalary[index] || 0);
+  result.map((item) => {
+    let amt = Number(item.total_revenue) / Number(perDaySalary || 0);
     if (amt <= 10) {
       backgroundColor.push("rgba(255, 99, 132, 1)");
       borderColor.push("rgba(255, 99, 132, 1)");
@@ -191,11 +138,9 @@ const getChart = (result, currentMonth = null, montsArr = null) => {
         datalabels: {
           anchor: "end",
           align: "end",
-          formatter: (value, context) => {
-            //let perDay = result[context.dataIndex].dlb_salary//`${Math.ceil(Number(value) / Number(perDaySalary || 0))}`;
-            //perDay = perDay/30
-            //return `${Math.ceil(Number(value) / Number(perDay || 0))}X`; // Format values as 'k'
-            return `${Math.ceil(Number(value) / perDaySalary[context.dataIndex])}X`;
+          formatter: (value) => {
+            let revenueAmt = `${Math.ceil(Number(value) / Number(perDaySalary || 0))}`;
+            return `${Math.ceil(Number(value) / Number(perDaySalary || 0))}X`; // Format values as 'k'
           },
           color: "black",
           font: {
@@ -243,10 +188,9 @@ const getMonthlyReportChart = () => {
       counslarId: getCounslerId(),
     },
     success: (response) => {
+      console.log("result ::: ", response);
       if (response.apiSuccess === 1) {
         const result = response.responsePacket;
-        const userResult = response.userResult;
-        $("#counslerInfo").html(`${userResult?.Cname} (${userResult?.salary}))`);
         getChart(result, null, true);
       } else {
         getChart([], null, true);
@@ -327,6 +271,7 @@ const handleFilterAnimation = (filterType = "byLabel") => {
     }
   }
 };
+
 
 $(document).ready(function () {
   getCounslerId();

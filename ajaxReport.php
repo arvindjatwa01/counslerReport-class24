@@ -5,6 +5,7 @@ if (mysqli_connect_errno()) {
     die;
 }
 
+
 function enc_dec($str, $type = "enc", $time = '')
 {
     $key = 'crypt';
@@ -23,6 +24,21 @@ function enc_dec($str, $type = "enc", $time = '')
             return array($dec[0], $dec[1]);
         }
     }
+}
+
+function getUserInfo($counslerId, $db)
+{
+    $query = "SELECT dlb_a_name AS Cname, dlb_salary AS salary
+FROM wifi_admin
+WHERE dlb_a_id = 670;";
+    $result = mysqli_query($db, $query);
+
+    // Fetch data from the result set
+    $data = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        $data[] = $row;
+    }
+    return (($data));
 }
 
 if ($_POST["getMonthWeeksReport"]) {
@@ -55,43 +71,6 @@ if ($_POST['getMonthsReport']) {
 
     $userId = $_POST["counslarId"];
     $counslerId = enc_dec($userId, "dec", "");
-
-    //     $query = "WITH last_six_months AS (
-//     SELECT DATE_FORMAT(CURDATE() - INTERVAL 5 MONTH, '%Y-%m-01') AS first_day
-//     UNION ALL
-//     SELECT DATE_FORMAT(CURDATE() - INTERVAL 4 MONTH, '%Y-%m-01')
-//     UNION ALL
-//     SELECT DATE_FORMAT(CURDATE() - INTERVAL 3 MONTH, '%Y-%m-01')
-//     UNION ALL
-//     SELECT DATE_FORMAT(CURDATE() - INTERVAL 2 MONTH, '%Y-%m-01')
-//     UNION ALL
-//     SELECT DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01')
-//     UNION ALL
-//     SELECT DATE_FORMAT(CURDATE(), '%Y-%m-01')
-// )
-// SELECT 
-//     MONTH(lsm.first_day) AS month_number,
-//     YEAR(lsm.first_day) AS year_number,
-//     COUNT(wcr.dlb_created_date) AS records_count, 
-//     COALESCE(SUM(wcr.dlb_collectorate_revenue), 0) AS total_revenue, 
-//     COALESCE(MAX(wcr.dlb_collectorate_revenue), 0) AS highest_revenue, 
-//     COALESCE(wcr.dlb_salary, 0) AS dlb_salary, 
-//     COALESCE(GROUP_CONCAT(wcr.dlb_c_id ORDER BY wcr.dlb_c_id ASC), '') AS dlb_c_ids, 
-//     COALESCE(GROUP_CONCAT(wcr.dlb_a_id ORDER BY wcr.dlb_c_id ASC), '') AS dlb_a_ids, 
-//     COALESCE(GROUP_CONCAT(wcr.dlb_created_date ORDER BY wcr.dlb_c_id ASC), '') AS dlb_created_dates 
-// FROM 
-//     last_six_months lsm
-// LEFT JOIN 
-//     wifi_counsellor_report wcr
-// ON 
-//     MONTH(wcr.dlb_created_date) = MONTH(lsm.first_day)
-//     AND YEAR(wcr.dlb_created_date) = YEAR(lsm.first_day)
-//     AND wcr.dlb_a_id = $counslerId
-// GROUP BY 
-//     YEAR(lsm.first_day), MONTH(lsm.first_day)
-// ORDER BY 
-//     YEAR(lsm.first_day) ASC, MONTH(lsm.first_day) ASC;
-// ";
 
     $query = "SELECT 
     MONTH(lsm.first_day) AS month_number,
@@ -138,6 +117,9 @@ ORDER BY
         $apiSuccess = 1;
     }
 
-    echo json_encode(array("apiSuccess" => $apiSuccess, "responsePacket" => $data));
+    $userResponse = (getUserInfo($counslerId, $db));
+
+    echo json_encode(array("apiSuccess" => $apiSuccess, "responsePacket" => $data, "userResult" => $userResponse[0]));
+
 }
 ?>
